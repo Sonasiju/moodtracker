@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            display: flex;
+            justify-content: center;
+            padding: 0;
+            background-color: #f4bbe1; /* Rose background */
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        .content {
+            width: 60%;
+            text-align: center;
+        }
+        .calendar-container {
+            width: 35%;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h2, h3 {
+            color: #333;
+        }
+        select, button, textarea {
+            font-size: 16px;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #message {
+            margin-top: 15px;
+            font-size: 25px;
+            font-weight: bold;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .day {
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            border-radius: 5px;
+            background-color: lightgray; /* Default color */
+        }
+        .good { background-color: #2E8B57; color: white; } /* Green */
+        .not-bad { background-color: #FFC300; color: black; } /* Yellow */
+        .bad { background-color: #FF5733; color: white; } /* Red */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="content">
+        <h2>Hey there!....How's your day going? 😊</h2>
+        
+        <form id="moodForm">
+            <select id="mood">
+                <option value="Good">Good 😊</option>
+                <option value="Not Bad">Not Bad 😐</option>
+                <option value="Bad">Bad 😔</option>
+            </select>
+            <p id="dayNote">We'd love to hear about your day! Let us know how you're feeling. 💬</p> 
+            <textarea id="dayEntry" placeholder="Tell us about your day..."></textarea>
+            <button type="submit">Submit</button>
+        </form>
+
+        <p id="message"></p>
+        </div>
+        
+
+    <!-- Scrollable Calendar Section -->
+    <div class="calendar-container">
+        <h3>Your Monthly Mood Trend 📊</h3>
+        <div class="calendar-header">
+            <button id="prevMonth">⬅️</button>
+            <h3 id="calendarTitle">Month Year</h3>
+            <button id="nextMonth">➡️</button>
+        </div>
+        <div class="calendar" id="calendar"></div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const moodForm = document.getElementById("moodForm");
+            const message = document.getElementById("message");
+            const moodList = document.getElementById("moodList");
+            const calendar = document.getElementById("calendar");
+            const calendarTitle = document.getElementById("calendarTitle");
+            const prevMonthBtn = document.getElementById("prevMonth");
+            const nextMonthBtn = document.getElementById("nextMonth");
+            let currentMonth = new Date().getMonth();
+            let currentYear = new Date().getFullYear();
+            const today = new Date().toISOString().split("T")[0];
+
+            let moods = JSON.parse(localStorage.getItem("moods")) || {};
+
+            if (moods[today]) {
+                document.getElementById("mood").value = moods[today].mood;
+                showMoodMessage(moods[today].mood);
+            }
+
+            moodForm.addEventListener("submit", function (e) {
+                e.preventDefault();
+                const selectedMood = document.getElementById("mood").value;
+                const dayEntry = document.getElementById("dayEntry").value;
+
+                moods[today] = { mood: selectedMood, note: dayEntry };
+                localStorage.setItem("moods", JSON.stringify(moods));
+
+                showMoodMessage(selectedMood);
+                loadMoodHistory();
+                generateCalendar(currentMonth, currentYear);
+            });
+
+            function showMoodMessage(mood) {
+                if (mood === "Bad") {
+                    message.innerText = "Feeling down? You're not alone! 🌻 Take a deep breath, and remember—tomorrow is a fresh start! 💛";
+                    message.style.color = "#FF5733";
+                } else if (mood === "Not Bad") {
+                    message.innerText = "Hang in there! 🌟 You're doing great! 🌈 Every day is a new chance to shine!";
+                    message.style.color = "#dc7777";
+                } else {
+                    message.innerText = "Awesome! Keep spreading positivity! ✨🌟";
+                    message.style.color = "#2E8B57";
+                }
+            }
+
+            function generateCalendar(month, year) {
+                calendar.innerHTML = "";
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const todayDate = new Date().getDate();
+                const todayMonth = new Date().getMonth();
+                const todayYear = new Date().getFullYear();
+                calendarTitle.innerText = `${new Date(year, month).toLocaleString('default', { month: 'long' })} ${year}`;
+
+                for (let i = 0; i < firstDay; i++) {
+                    let emptyDiv = document.createElement("div");
+                    emptyDiv.className = "day";
+                    calendar.appendChild(emptyDiv);
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    let moodClass = "day";
+
+                    if (moods[date]) {
+                        moodClass += moods[date].mood === "Good" ? " good" : moods[date].mood === "Not Bad" ? " not-bad" : " bad";
+                    } else if (year < todayYear || (year === todayYear && month < todayMonth) || (year === todayYear && month === todayMonth && day < todayDate)) {
+                        const randomMood = ["good", "not-bad", "bad"][Math.floor(Math.random() * 3)];
+                        moodClass += ` ${randomMood}`;
+                    }
+
+                    let dayDiv = document.createElement("div");
+                    dayDiv.className = moodClass;
+                    dayDiv.innerText = day;
+                    calendar.appendChild(dayDiv);
+                }
+            }
+
+            prevMonthBtn.addEventListener("click", () => {
+                if (currentMonth === 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                } else {
+                    currentMonth--;
+                }
+                generateCalendar(currentMonth, currentYear);
+            });
+
+            nextMonthBtn.addEventListener("click", () => {
+                if (currentMonth === 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                } else {
+                    currentMonth++;
+                }
+                generateCalendar(currentMonth, currentYear);
+            });
+
+            generateCalendar(currentMonth, currentYear);
+        });
+    </script>
+</body>
+</html>
