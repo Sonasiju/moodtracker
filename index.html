@@ -11,55 +11,66 @@
             margin: 20px;
             display: flex;
             justify-content: center;
+            align-items: center;
+            flex-direction: column;
             padding: 0;
             background-color: #f4bbe1; /* Rose background */
             color: #333;
             overflow-x: hidden;
         }
         
-        .content {
+        .content, .calendar-container {
             width: 60%;
+            max-width: 500px;
             text-align: center;
         }
+        
         .calendar-container {
-            width: 35%;
             padding: 20px;
             background: white;
             border-radius: 10px;
             box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
+            margin-top: 20px;
         }
+
         h2, h3 {
             color: #333;
         }
+
         select, button, textarea {
             font-size: 16px;
             padding: 10px;
             margin: 10px;
             border-radius: 5px;
+            width: 100%; /* Full width for better mobile usability */
         }
+
         button {
             background-color: #3498db;
             color: white;
             border: none;
             cursor: pointer;
         }
+
         button:hover {
             background-color: #2980b9;
         }
+
         #message {
             margin-top: 15px;
-            font-size: 25px;
+            font-size: 20px;
             font-weight: bold;
         }
+
         .calendar {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 5px;
             margin-top: 10px;
         }
+
         .day {
-            width: 40px;
+            width: auto;
             height: 40px;
             text-align: center;
             line-height: 40px;
@@ -67,14 +78,40 @@
             border-radius: 5px;
             background-color: lightgray; /* Default color */
         }
+
         .good { background-color: #2E8B57; color: white; } /* Green */
         .not-bad { background-color: #FFC300; color: black; } /* Yellow */
         .bad { background-color: #FF5733; color: white; } /* Red */
+
         .calendar-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .content, .calendar-container {
+                width: 90%;
+                max-width: 400px;
+            }
+
+            .calendar {
+                grid-template-columns: repeat(7, minmax(30px, 1fr)); /* Adjust grid for smaller screens */
+                gap: 3px;
+            }
+
+            .day {
+                height: 35px;
+                line-height: 35px;
+                font-size: 14px;
+            }
+
+            button {
+                font-size: 14px;
+                padding: 8px;
+            }
         }
     </style>
 </head>
@@ -95,8 +132,7 @@
         </form>
 
         <p id="message"></p>
-        </div>
-        
+    </div>
 
     <!-- Scrollable Calendar Section -->
     <div class="calendar-container">
@@ -113,7 +149,6 @@
         document.addEventListener("DOMContentLoaded", function () {
             const moodForm = document.getElementById("moodForm");
             const message = document.getElementById("message");
-            const moodList = document.getElementById("moodList");
             const calendar = document.getElementById("calendar");
             const calendarTitle = document.getElementById("calendarTitle");
             const prevMonthBtn = document.getElementById("prevMonth");
@@ -138,7 +173,6 @@
                 localStorage.setItem("moods", JSON.stringify(moods));
 
                 showMoodMessage(selectedMood);
-                loadMoodHistory();
                 generateCalendar(currentMonth, currentYear);
             });
 
@@ -159,9 +193,6 @@
                 calendar.innerHTML = "";
                 const firstDay = new Date(year, month, 1).getDay();
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const todayDate = new Date().getDate();
-                const todayMonth = new Date().getMonth();
-                const todayYear = new Date().getFullYear();
                 calendarTitle.innerText = `${new Date(year, month).toLocaleString('default', { month: 'long' })} ${year}`;
 
                 for (let i = 0; i < firstDay; i++) {
@@ -176,9 +207,6 @@
 
                     if (moods[date]) {
                         moodClass += moods[date].mood === "Good" ? " good" : moods[date].mood === "Not Bad" ? " not-bad" : " bad";
-                    } else if (year < todayYear || (year === todayYear && month < todayMonth) || (year === todayYear && month === todayMonth && day < todayDate)) {
-                        const randomMood = ["good", "not-bad", "bad"][Math.floor(Math.random() * 3)];
-                        moodClass += ` ${randomMood}`;
                     }
 
                     let dayDiv = document.createElement("div");
@@ -189,27 +217,18 @@
             }
 
             prevMonthBtn.addEventListener("click", () => {
-                if (currentMonth === 0) {
-                    currentMonth = 11;
-                    currentYear--;
-                } else {
-                    currentMonth--;
-                }
+                currentMonth = currentMonth === 0 ? 11 : currentMonth - 1;
                 generateCalendar(currentMonth, currentYear);
             });
 
             nextMonthBtn.addEventListener("click", () => {
-                if (currentMonth === 11) {
-                    currentMonth = 0;
-                    currentYear++;
-                } else {
-                    currentMonth++;
-                }
+                currentMonth = currentMonth === 11 ? 0 : currentMonth + 1;
                 generateCalendar(currentMonth, currentYear);
             });
 
             generateCalendar(currentMonth, currentYear);
         });
     </script>
+
 </body>
 </html>
